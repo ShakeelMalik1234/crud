@@ -1,0 +1,17 @@
+.form-ragister{
+    margin-top: 5%;
+    
+}
+.error{
+    color: red!important;
+    justify-content: right;
+    display: flex;
+    list-style: none;
+    font-size: 12px;
+}
+.form-error{
+    border-color: red;
+}
+input.valid{
+    border: 1px solid green;;
+}
