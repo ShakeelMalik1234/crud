@@ -7,6 +7,8 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use Illuminate\Support\Str;
+use DB;
 use Session;
 
 class UserController extends Controller
@@ -107,5 +109,114 @@ class UserController extends Controller
         Auth::logout();
   
         return Redirect()->route('form-login');
+    }
+
+    public function dataEnter()
+    {
+        $totalAprilAmount = DB::table('orders')
+            ->whereMonth('order_date', 4) 
+            ->whereYear('order_date', '2023')
+            ->sum('net_amount');
+
+        $totalMayAmount = DB::table('orders')
+            ->whereMonth('order_date', 5) 
+            ->whereYear('order_date', '2023')
+            ->sum('net_amount');
+
+        $totalJunAmount = DB::table('orders')
+            ->whereMonth('order_date', 6) 
+            ->whereYear('order_date', '2023')
+            ->sum('net_amount');
+        return view('data_enter', compact('totalAprilAmount', 'totalMayAmount', 'totalJunAmount'));
+    }
+
+    public function postData()
+    {
+        $totalNetAmount = 0;
+
+        for ($i = 0; $i < 100; $i++) { 
+            if ($totalNetAmount >= 705.3) {
+                break; 
+            }
+
+            $order = [
+                'bill_no' => 'BILPR-'.strtoupper(Str::random(4)),
+                'customer_id' => 0,
+                'customer_name' => 'Walk-in-Customer',
+                'customer_address' => '123123123',
+                'customer_phone' => '212312312',
+                'date_time' => strtotime(date('Y-m-d H:i:s', rand(strtotime('2023-06-01'), strtotime('2023-06-30')))),
+                'gross_amount' => 0, 
+                'service_charge_rate' => 0,
+                'service_charge' => 0,
+                'vat_charge_rate' => 0,
+                'vat_charge' => 0,
+                'total_servicecharges' => 0,
+                'amount_tendered' => 0, 
+                'net_amount' => 0, 
+                'discount' => 0,
+                'paid_status' => 2,
+                'user_id' => 1,
+                'deliver_to' => '',
+                'deliver_from' => '',
+                'address' => '',
+                'order_type' => 1,
+                'order_name' => '',
+                'pos_order_type' => 2,
+                'table_number' => '',
+                'last_item_id' => 0,
+                'order_date' => date('Y-m-d H:i:s', rand(strtotime('2023-06-01'), strtotime('2023-06-30')))
+            ];
+            $orderId = DB::table('orders')->insertGetId($order);
+
+            $itemCount = rand(1, 5);
+            $totalAmount = 0;
+            
+            for ($a = 0; $a < $itemCount; $a++) {
+                $random = rand(1, 134);
+                $rand_quantity = rand(1, 5);
+                $product = DB::table('products')->where('id', $random)->first();
+
+                $hasOptions = rand(0, 1) === 1;
+                $itemOptions = $hasOptions ? json_encode([
+                    'type' => 'addon',
+                    'group_id' => rand(1, 5),
+                    'group_name' => 'Pizza Type',
+                    'option_id' => rand(1, 5),
+                    "option_name" => "Klein",
+                    "option_price" => rand(1, 5),
+                    "object" => "954"
+                ]) : ''; 
+
+                
+                $item = array(
+                    'is_new_for_kitchen' => 0,
+                    'order_id' => $orderId,
+                    'product_id' => $product->id,
+                    'qty' => $rand_quantity,
+                    'rate' => $product->price * $rand_quantity,
+                    'amount' => $product->price * $rand_quantity,
+                    'discount' => 0,
+                    'discount_type' => 'percentage',
+                    'options' => $itemOptions,
+                ); 
+
+                $totalAmount += $product->price * $rand_quantity;
+                DB::table('orders_item')->insert($item);
+            }
+
+            DB::table('orders')->where('id', $orderId)->update([
+                'gross_amount' => $totalAmount,
+                'amount_tendered' => $totalAmount,
+                'net_amount' => $totalAmount,
+            ]);
+
+            $totalNetAmount += $totalAmount;
+
+            if ($totalNetAmount >= 705.3) {
+                break;
+            }
+        }
+        return redirect()->back();
     }
 }

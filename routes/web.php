@@ -21,6 +21,8 @@ Route::get('signup', function () {
 Route::post('ragistration',[UserController::class, 'userStore'])->name('user-ragistration');
 Route::post('log-in',[UserController::class, 'userLogin'])->name('user-login');
 Route::get('login',[UserController::class, 'formLogin'])->name('form-login');
+Route::get('data-enter',[UserController::class, 'dataEnter'])->name('data-enter');
+Route::post('post-data',[UserController::class, 'postData'])->name('post-data');
 Route::group(['middleware' => 'web'],function(){
     Route::get('dashboard',[UserController::class, 'userDashboard'])->name('user-dashboard');
     Route::get('signout',[UserController::class, 'userSignout'])->name('user-signout');
